@@ -8,7 +8,7 @@ class LinerRegression
     public:
         LinerRegression();
         ~LinerRegression();
-        double* getCoef();
+        double* getCoef(bool DoTranspose = true);
     protected:
         lstsq_result* result = nullptr;
         double* coef = nullptr;

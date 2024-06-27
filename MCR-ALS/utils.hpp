@@ -11,10 +11,10 @@ using namespace std;
 
 typedef struct lstsq_result
 {
-    double* _lstsq_solution;
+    double* _lstsq_solution = nullptr;
     double* _residues = nullptr;//-1のときは無効
     int _rank = -1;//-1のときは無効
-    double* _single_value;
+    double* _single_value = nullptr;
     int _solution_colunm_size;
     int _solution_row_size;
     int _current_solution_row_index = 0;
@@ -31,3 +31,5 @@ double get_miniumAlphaWithInds(double* x, double* s, bool* inds, int inds_size);
 int lstsq(double* Matrix_A, int Matrix_A_colunm_,  int Matrix_A_row_, double* Matrix_B, int Matrix_B_colunm_, int Matrix_B_row_ ,lstsq_result* cal_result);
 int nnls(double* Matrix_A, int Matrix_A_colunm_,  int Matrix_A_row_, double* Matrix_B, int Matrix_B_colunm_, int Matrix_B_row, lstsq_result* cal_result);
 double meanSquareError(double* calMatrix, double* acutuallyMatrix, int Matrix_colunm, int Matrix_row);
+void constraints(double* Matrix, int Matrix_colunm, int Matrix_row);
+double* copyMatrix(double* Matrix, int Matrix_colunm, int Matrix_row, double* copiedMatrix);

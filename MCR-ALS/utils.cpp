@@ -2,26 +2,26 @@
 
 lstsq_result::lstsq_result(int solution_colunm_size, int solution_row_size):_solution_colunm_size{solution_colunm_size},_solution_row_size{solution_row_size}
 {
-    _lstsq_solution = new double[_solution_colunm_size * _solution_row_size];
-    _residues = new double[_solution_row_size];
-    _single_value   = new double[_solution_colunm_size];
+    _lstsq_solution = new double[solution_colunm_size * solution_row_size];
+    _residues = new double[solution_row_size];
+    _single_value   = new double[solution_colunm_size];
 };
 
 lstsq_result::~lstsq_result()
 {
-    delete _lstsq_solution;
-    delete _residues;
-    delete _single_value;
+    delete[] _lstsq_solution;
+    delete[] _residues;
+    delete[] _single_value;
 };
 
 void lstsq_result::showData()
 {
-    cout << "最小二乗解：" << std::endl << "{" << std::endl;
+    std::cout << "最小二乗解：" << std::endl << "{" << std::endl;
     for(int i = 0; i < _solution_colunm_size; i++)
     {
         for(int j = 0; j < _solution_row_size; j++)
         {
-            cout << std::fixed << std::setprecision(9) << _lstsq_solution[i * _solution_row_size + j] << " ";
+            cout << std::fixed << std::setprecision(5) << _lstsq_solution[i * _solution_row_size + j] << " ";
         }
         std::cout << std::endl;
     }
@@ -31,8 +31,7 @@ void lstsq_result::showData()
     std::cout << "}" << std::endl;
     if(_rank != -1)
     {
-        std::cout << "rank：" << _rank << endl;
-        std::cout << "特異値：{";
+        std::cout << "rank：" << _rank << std::endl << "特異値：{";
         for(int i = 0; i < (_solution_colunm_size > _solution_row_size ? _solution_row_size : _solution_colunm_size);i++)std::cout << _single_value[i] << ",";
         std::cout << "}" << endl;
     }
@@ -105,88 +104,137 @@ double get_miniumAlphaWithInds(double* x, double* s, bool* inds, int inds_size)
 int lstsq(double* Matrix_A, int Matrix_A_colunm_,  int Matrix_A_row_, double* Matrix_B, int Matrix_B_colunm_, int Matrix_B_row_ ,lstsq_result* cal_result)
 {
     std::cout << "start Least square..." << std::endl;
-    double* Matrix_A_t = new double[Matrix_A_colunm_ * Matrix_A_row_];
-    double* MtM = new double[Matrix_A_row_ * Matrix_A_row_];
-    double* buffer = new double[Matrix_A_colunm_ * Matrix_A_row_];
-    double* vector = new double[Matrix_A_colunm_];
-    double* vector_B_from_Matrix_B = new double[Matrix_B_colunm_];
 
-    for(int i = 0; i < cal_result->_solution_row_size; i++)
+    double* Pinv_Matrix = new double[Matrix_A_colunm_ * Matrix_A_row_];
+    double* vector_B_from_Matrix_B = new double[Matrix_B_colunm_];
+    double* solution_buffer = new double[Matrix_A_row_];
+    double* residues_buffer = new double[Matrix_B_colunm_];
+
+    //疑似逆行列を求める&特異値を求める
+    Pseudo_inverse(Matrix_A,Matrix_A_colunm_,Matrix_A_row_,Pinv_Matrix);
+    //showMatrix(Vt_Sstar_Ut,Matrix_A_row_,Matrix_A_colunm_);
+
+    for(int i = 0; i < Matrix_B_row_; i++)
     {
         for(int j = 0; j< Matrix_B_colunm_; j++)
         {
             vector_B_from_Matrix_B[j] = Matrix_B[j * Matrix_B_row_ + i];
         }
 
-        double* current_resultPointer = cal_result->_lstsq_solution + i * cal_result->_solution_colunm_size;
-
-         //最小二乗解を求める
-        transpose(Matrix_A,Matrix_A_colunm_,Matrix_A_row_,Matrix_A_t);
-        //showMatrix(Matrix_A_t,Matrix_A_row_,Matrix_A_colunm_);
-        dot(Matrix_A_t,Matrix_A_row_,Matrix_A_colunm_,Matrix_A,Matrix_A_colunm_,Matrix_A_row_,MtM);
-        //showMatrix(MtM,Matrix_A_row_,Matrix_A_row_);
-        inverse(MtM,Matrix_A_row_,Matrix_A_row_,MtM);
-        //showMatrix(MtM,Matrix_A_row_,Matrix_A_row_);
-        dot(MtM,Matrix_A_row_,Matrix_A_row_,Matrix_A_t,Matrix_A_row_,Matrix_A_colunm_,buffer);
-        //showMatrix(buffer,Matrix_A_colunm_,Matrix_A_row_);
-        //showMatrix(vector_B_from_Matrix_B,1,Matrix_B_colunm_);
-        dot(buffer,Matrix_A_row_,Matrix_A_colunm_,vector_B_from_Matrix_B,Matrix_B_colunm_,1,current_resultPointer);
-
-        //showMatrix(current_resultPointer,1,cal_result->_solution_colunm_size);
+        //最小二乗解を求める
+        
+        //SETDEBUGFLAG(true);
+        dot(Pinv_Matrix,Matrix_A_row_,Matrix_A_colunm_,vector_B_from_Matrix_B,Matrix_B_colunm_,1,solution_buffer);
+        //SETDEBUGFLAG(false);
+        for(int j = 0; j < Matrix_A_colunm_; j++)
+        {
+            cal_result->_lstsq_solution[j * cal_result->_solution_row_size + i] = solution_buffer[j];
+        }
 
         //残差(二乗誤差)
-        int residues = 0;
-
-        dot(Matrix_A,Matrix_A_colunm_,Matrix_A_row_,current_resultPointer,cal_result->_solution_colunm_size,1,vector);
-        sub(vector,Matrix_B,Matrix_B_colunm_,1,vector);
-
-        residues = norm(vector,Matrix_A_row_);
-
+        double residues = 0;
+        //SETDEBUGFLAG(true);
+        dot(Matrix_A,Matrix_A_colunm_,Matrix_A_row_,solution_buffer,Matrix_A_row_,1,residues_buffer);
+        //SETDEBUGFLAG(false);
+        sub(vector_B_from_Matrix_B,residues_buffer,Matrix_B_colunm_,1,residues_buffer);
+        residues = norm(residues_buffer,Matrix_B_colunm_);
         cal_result->_residues[i] = sqrt(residues);
     }
 
-    transpose(cal_result->_lstsq_solution,cal_result->_solution_row_size,cal_result->_solution_colunm_size,cal_result->_lstsq_solution);
+    //rankを求める
+    //cal_result->_rank = eig_rank(cal_result->_single_value,(Matrix_A_colunm_ > Matrix_A_row_ ? Matrix_A_row_ : Matrix_A_colunm_));
 
-    delete Matrix_A_t;
-    delete MtM;
-    delete buffer;
-    delete vector;
-    delete vector_B_from_Matrix_B;
+    delete[] Pinv_Matrix;
+    delete[] vector_B_from_Matrix_B;
+    delete[] solution_buffer;
+    delete[] residues_buffer;
+
+
+    //double* Matrix_A_t = new double[Matrix_A_colunm_ * Matrix_A_row_];
+    //double* MtM = new double[Matrix_A_row_ * Matrix_A_row_];
+    //double* buffer = new double[Matrix_A_colunm_ * Matrix_A_row_];
+    //double* vector = new double[Matrix_A_colunm_];
+    //double* vector_B_from_Matrix_B = new double[Matrix_B_colunm_];
+//
+//
+    //
+//
+    //for(int i = 0; i < cal_result->_solution_row_size; i++)
+    //{
+    //    for(int j = 0; j< Matrix_B_colunm_; j++)
+    //    {
+    //        vector_B_from_Matrix_B[j] = Matrix_B[j * Matrix_B_row_ + i];
+    //    }
+//
+    //    double* current_resultPointer = cal_result->_lstsq_solution + i * cal_result->_solution_colunm_size;
+//
+    //     //最小二乗解を求める
+    //    transpose(Matrix_A,Matrix_A_colunm_,Matrix_A_row_,Matrix_A_t);
+    //    showMatrix(Matrix_A_t,Matrix_A_row_,Matrix_A_colunm_);
+    //    dot(Matrix_A_t,Matrix_A_row_,Matrix_A_colunm_,Matrix_A,Matrix_A_colunm_,Matrix_A_row_,MtM);
+    //    showMatrix(MtM,Matrix_A_row_,Matrix_A_row_);
+    //    inverse(MtM,Matrix_A_row_,Matrix_A_row_,MtM);
+    //    showMatrix(MtM,Matrix_A_row_,Matrix_A_row_);
+    //    dot(MtM,Matrix_A_row_,Matrix_A_row_,Matrix_A_t,Matrix_A_row_,Matrix_A_colunm_,buffer);
+    //    showMatrix(buffer,Matrix_A_colunm_,Matrix_A_row_);
+    //    showMatrix(vector_B_from_Matrix_B,1,Matrix_B_colunm_);
+    //    dot(buffer,Matrix_A_row_,Matrix_A_colunm_,vector_B_from_Matrix_B,Matrix_B_colunm_,1,current_resultPointer);
+//
+    //    showMatrix(current_resultPointer,1,cal_result->_solution_colunm_size);
+//
+    //    //残差(二乗誤差)
+    //    int residues = 0;
+//
+    //    dot(Matrix_A,Matrix_A_colunm_,Matrix_A_row_,current_resultPointer,cal_result->_solution_colunm_size,1,vector);
+    //    sub(vector,Matrix_B,Matrix_B_colunm_,1,vector);
+//
+    //    residues = norm(vector,Matrix_A_row_);
+//
+    //    cal_result->_residues[i] = sqrt(residues);
+    //}
+//
+    //transpose(cal_result->_lstsq_solution,cal_result->_solution_row_size,cal_result->_solution_colunm_size,cal_result->_lstsq_solution);
+//
+    //delete[] Matrix_A_t;
+    //delete[] MtM;
+    //delete[] buffer;
+    //delete[] vector;
+    //delete[] vector_B_from_Matrix_B;
 
     //特異値分解
-    int Matrix_buffer_size = (Matrix_A_colunm_ > Matrix_A_row_ ? Matrix_A_row_ : Matrix_A_colunm_);
-    double* Matrix_t = new double[Matrix_A_colunm_ * Matrix_A_row_];
-    double* Matrix_buffer = new double[Matrix_A_colunm_ * Matrix_A_colunm_];
-    double* eigVal = new double[Matrix_buffer_size];
-
-    Matrix_t = transpose(Matrix_A,Matrix_A_colunm_,Matrix_A_row_,Matrix_t);
-
-    if(Matrix_A_colunm_ > Matrix_A_row_)//U
-    {
-        Matrix_buffer = dot(Matrix_t,Matrix_A_row_,Matrix_A_colunm_,Matrix_A,Matrix_A_colunm_,Matrix_A_row_,Matrix_buffer);
-    }
-    else//V
-    {
-        Matrix_buffer = dot(Matrix_A,Matrix_A_colunm_,Matrix_A_row_,Matrix_t,Matrix_A_row_,Matrix_A_colunm_,Matrix_buffer);
-    }
-
-    eigVal = eig(Matrix_buffer,Matrix_A_colunm_,Matrix_A_colunm_,eigVal);
+    //int Matrix_buffer_size = (Matrix_A_colunm_ > Matrix_A_row_ ? Matrix_A_row_ : Matrix_A_colunm_);
+    //double* Matrix_t = new double[Matrix_A_colunm_ * Matrix_A_row_];
+    //double* Matrix_buffer = new double[Matrix_A_colunm_ * Matrix_A_colunm_];
+    //double* eigVal = new double[Matrix_buffer_size];
+//
+    //Matrix_t = transpose(Matrix_A,Matrix_A_colunm_,Matrix_A_row_,Matrix_t);
+//
+    //if(Matrix_A_colunm_ > Matrix_A_row_)//U
+    //{
+    //    Matrix_buffer = dot(Matrix_t,Matrix_A_row_,Matrix_A_colunm_,Matrix_A,Matrix_A_colunm_,Matrix_A_row_,Matrix_buffer);
+    //}
+    //else//V
+    //{
+    //    Matrix_buffer = dot(Matrix_A,Matrix_A_colunm_,Matrix_A_row_,Matrix_t,Matrix_A_row_,Matrix_A_colunm_,Matrix_buffer);
+    //}
+//
+    //eigVal = eig(Matrix_buffer,Matrix_A_colunm_,Matrix_A_colunm_,eigVal);
 
     //Matrix_Aのrank計算
-    cal_result->_rank = Matrix_rank(eigVal,Matrix_A_colunm_,Matrix_buffer_size);
+    //cal_result->_rank = Matrix_rank(eigVal,Matrix_A_colunm_,Matrix_buffer_size);
 
     //singleValueの計算
-    int j = 0;
-    for(int i = 0; i < cal_result->_solution_colunm_size;i++)
-    {
-        if(eigVal[i * Matrix_A_row_ + i] == 0)continue;
-        cal_result->_single_value[j] = std::sqrt(eigVal[i * Matrix_A_row_ + i]);
-        j++;
-    }
+    //int j = 0;
+    //for(int i = 0; i < cal_result->_solution_colunm_size;i++)
+    //{
+    //    if(eigVal[i * Matrix_A_row_ + i] == 0)continue;
+    //    cal_result->_single_value[j] = std::sqrt(eigVal[i * Matrix_A_row_ + i]);
+    //    j++;
+    //}
 
-    delete Matrix_t;
-    delete Matrix_buffer;
-    delete eigVal;
+    //delete[] Matrix_t;
+    //delete[] Matrix_buffer;
+    //delete[] eigVal;
     std::cout << "end Least square..." << std::endl;
     return 1;
 }
@@ -362,10 +410,10 @@ int nnls(double* Matrix_A, int Matrix_A_colunm_,  int Matrix_A_row_, double* Mat
                     //x[i] = s[i];       
                 }
 
-                delete new_sub_Matrix;
-                delete new_sub_vector;
-                delete tmp_sub;
-                delete inds;
+                delete[] new_sub_Matrix;
+                delete[] new_sub_vector;
+                delete[] tmp_sub;
+                delete[] inds;
             }
 
             for(int i = 0; i < Matrix_A_row_; i++)x[i] = s[i];
@@ -377,23 +425,23 @@ int nnls(double* Matrix_A, int Matrix_A_colunm_,  int Matrix_A_row_, double* Mat
             //showMatrix(x,1,Matrix_A_row_);
             //showMatrix(w,1,Matrix_B_colunm_);
 
-            delete tmp_vector;
+            delete[] tmp_vector;
 
-            delete new_Matrix;
-            delete new_vector;
-            delete tmp;
+            delete[] new_Matrix;
+            delete[] new_vector;
+            delete[] tmp;
 
             if(iter == maxiter)
             {
                 for(int i = 0; i < cal_result->_solution_colunm_size; i++)AtB[i] = x[i];
                 cal_result->_residues = nullptr;
-                delete Matrix_A_T;
-                delete AtA;
-                delete x;
-                delete s;
-                delete P;
-                delete w;
-                delete vector_B_from_MatrixB;
+                delete[] Matrix_A_T;
+                delete[] AtA;
+                delete[] x;
+                delete[] s;
+                delete[] P;
+                delete[] w;
+                delete[] vector_B_from_MatrixB;
                 return -1;
             }
         }
@@ -406,7 +454,7 @@ int nnls(double* Matrix_A, int Matrix_A_colunm_,  int Matrix_A_row_, double* Mat
         //残差計算
         cal_result->_residues[i] = norm(tmp_vector,Matrix_B_colunm_);
 
-        delete tmp_vector;
+        delete[] tmp_vector;
 
         //showMatrix(AtB,1,cal_result->_solution_colunm_size);
 
@@ -414,21 +462,32 @@ int nnls(double* Matrix_A, int Matrix_A_colunm_,  int Matrix_A_row_, double* Mat
     
     transpose(cal_result->_lstsq_solution,cal_result->_solution_row_size,cal_result->_solution_colunm_size,cal_result->_lstsq_solution);
 
-    delete Matrix_A_T;
-    delete AtA;
-    delete x;
-    delete s;
-    delete P;
-    delete w;
-    delete vector_B_from_MatrixB;
+    delete[] Matrix_A_T;
+    delete[] AtA;
+    delete[] x;
+    delete[] s;
+    delete[] P;
+    delete[] w;
+    delete[] vector_B_from_MatrixB;
 
     std::cout << "end None Negative Least square..." << std::endl;
     return 1;
 }
 
-double meanSquareError(double* calMatrix, double* acutuallyMatrix, int Matrix_colunm, int Matrix_row)
+double meanSquareError(double* acutuallyMatrix, double* calMatrix, int Matrix_colunm, int Matrix_row)
 {
-    double error = 0;
-    for(int i = 0; i < Matrix_colunm; i++)for(int j = 0; j < Matrix_row; j++)error += (calMatrix[i * Matrix_row + j] - acutuallyMatrix[i * Matrix_row + j]) * (calMatrix[i * Matrix_row + j] - acutuallyMatrix[i * Matrix_row + j]);
-    return std::sqrt(error / (Matrix_colunm * Matrix_row));
+    double sum = 0;
+    for(int i = 0; i < Matrix_colunm; i++)for(int j = 0; j < Matrix_row; j++)sum += (acutuallyMatrix[i * Matrix_row + j] - calMatrix[i * Matrix_row + j]) * (acutuallyMatrix[i * Matrix_row + j] - calMatrix[i * Matrix_row + j]);
+    return sum / (Matrix_colunm * Matrix_row);
+}
+
+void constraints(double* Matrix, int Matrix_colunm, int Matrix_row)
+{
+    for(int i = 0; i < Matrix_colunm; i++)for(int j = 0; j < Matrix_row; j++)if(Matrix[i * Matrix_row + j] < 0)Matrix[i * Matrix_row + j] = 0;
+}
+
+double* copyMatrix(double* Matrix, int Matrix_colunm, int Matrix_row, double* copiedMatrix)
+{
+    for(int i = 0; i < Matrix_colunm; i++)for(int j = 0; j < Matrix_row; j++)copiedMatrix[i * Matrix_row + j] = Matrix[i * Matrix_row + j];
+    return copiedMatrix;
 }
