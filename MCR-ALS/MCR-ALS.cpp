@@ -2,30 +2,79 @@
 
 MCR_ALS::MCR_ALS(int maxIter):_maxIter{maxIter}
 {
-    regr = new OLS();
+    _C_regr = new OLS();
+    _St_regr = new OLS();
 }
 
 MCR_ALS::~MCR_ALS()
 {
     delete[] _C;
     delete[] _ST;
-    delete[] regr;
+    delete _C_regr;
+    delete _St_regr;
 }
 
-MCR_ALS& MCR_ALS::changeRegressorType(std::string RegressorType)
+MCR_ALS& MCR_ALS::changeRegressorType_forALL(std::string C_RegressorType,std::string St_RegressorType)
+{
+    if(C_RegressorType == "OLS")
+    {
+        delete _C_regr;
+        _C_regr = new OLS();
+    }
+    else if (C_RegressorType == "NNLS")
+    {
+        delete _C_regr;
+        _C_regr = new NNLS();
+    }
+
+    if(St_RegressorType == "OLS")
+    {
+        delete _St_regr;
+        _St_regr = new OLS();
+    }
+    else if (St_RegressorType == "NNLS")
+    {
+        delete _St_regr;
+        _St_regr = new NNLS();
+    }
+
+    std::cout << "Change To C_Regressor -> " << C_RegressorType << " & St_Regressor -> " << St_RegressorType <<  std::endl;
+
+    return *this;
+}
+
+MCR_ALS& MCR_ALS::changeRegressorType_forC(std::string RegressorType)
 {
     if(RegressorType == "OLS")
     {
-        delete regr;
-        regr = new OLS();
+        delete _C_regr;
+        _C_regr = new OLS();
     }
     else if (RegressorType == "NNLS")
     {
-        delete regr;
-        regr = new NNLS();
+        delete _C_regr;
+        _C_regr = new NNLS();
     }
 
-    std::cout << "changeTo" << RegressorType << std::endl;
+    std::cout << "changeTo C_Regressor -> " << RegressorType <<  std::endl;
+
+    return *this;
+}
+
+MCR_ALS& MCR_ALS::changeRegressorType_forSt(std::string RegressorType)
+{
+    if(RegressorType == "OLS")
+    {
+        delete _St_regr;
+        _St_regr = new OLS();
+    }
+    else if (RegressorType == "NNLS")
+    {
+        delete _St_regr;
+        _St_regr = new NNLS();
+    }
+
+    std::cout << "change To St_Regressor -> " << RegressorType <<  std::endl;
 
     return *this;
 }
@@ -36,41 +85,37 @@ MCR_ALS& MCR_ALS::fit(double* D, int D_colunm, int D_row, double* C, double* ST,
     if(_C != nullptr)delete[] _C;
     if(_ST != nullptr)delete[] _ST;
 
+    _C_Colunm = targetMatrix_colunm;
+    _C_Row = (C != nullptr ? targetMatrix_row : targetMatrix_colunm);;
+
+    _ST_Colunm = (ST != nullptr ? targetMatrix_colunm : targetMatrix_row);
+    _ST_Row = targetMatrix_row;
+
     double* D_T = new double[D_colunm * D_row];
-    double* Matrix_T = new double[targetMatrix_colunm * targetMatrix_row];
+    double* Matrix_T = new double[_ST_Colunm * _ST_Row];
     double* cal_D = new double[D_colunm * D_row];
 
     int n_increase = 0;
     int n_above_min = 0;
     errs.clear();
 
-    _C  = (C != nullptr  ? copyMatrix(C,targetMatrix_colunm,targetMatrix_row,new double[targetMatrix_colunm * targetMatrix_row]) : new double[D_colunm *  D_row]);
-    _ST = (ST != nullptr ? copyMatrix(ST,targetMatrix_colunm,targetMatrix_row,new double[targetMatrix_colunm * targetMatrix_row]) : new double[D_colunm *  D_row]);
+    _C  = (C != nullptr  ? copyMatrix(C,_C_Colunm,_C_Row,new double[_C_Colunm * _C_Row]) : new double[_C_Colunm *  _C_Row]);
+    _ST = (ST != nullptr ? copyMatrix(ST,_ST_Colunm,_ST_Row,new double[_ST_Colunm * _ST_Row]) : new double[_ST_Colunm *  _ST_Row]);
 
     for(int i = 0; i < _maxIter; i++)
     {
         if(_ST != nullptr)
         {
-            //std::cout << "ST" << std::endl;
-            //showMatrix(_ST,targetMatrix_colunm,targetMatrix_row);
             transpose(D,D_colunm,D_row,D_T);
-            transpose(_ST,targetMatrix_colunm,targetMatrix_row,Matrix_T);
-            
-            //showMatrix(D_T,D_row,D_colunm);
-            //showMatrix(Matrix_T,targetMatrix_colunm,targetMatrix_row);
-            regr->fit(Matrix_T,targetMatrix_row,targetMatrix_colunm,D_T,D_row,D_colunm);
+            transpose(_ST,_ST_Colunm,_ST_Row,Matrix_T);
 
-            //showMatrix(Matrix_T,targetMatrix_row,targetMatrix_colunm);
-            //showMatrix(D_T,D_row,D_colunm);
+            _C_regr->fit(Matrix_T,_ST_Row,_ST_Colunm,D_T,D_row,D_colunm);
 
-            double* C_tmp = regr->getCoef();
-            //showMatrix(C_tmp,D_row,D_colunm);
+            double* C_tmp = _C_regr->getCoef();
 
-            constraints(C_tmp,D_row,D_colunm);
-            //showMatrix(C_tmp,D_row,D_colunm);
+            constraints(C_tmp,_C_Colunm,_C_Row);
 
-
-            cal_D = dot(C_tmp,D_row,D_colunm,_ST,targetMatrix_colunm,targetMatrix_row,cal_D);
+            cal_D = product(C_tmp,_C_Colunm,_C_Row,_ST,_ST_Colunm,_ST_Row,cal_D);
             double tmp_err = meanSquareError(cal_D,D,D_colunm,D_row);
 
             if(ismin_err(tmp_err))n_above_min = 0;
@@ -81,12 +126,12 @@ MCR_ALS& MCR_ALS::fit(double* D, int D_colunm, int D_row, double* C, double* ST,
             if(errs.size() == 0)
             {
                 errs.push_back(tmp_err);
-                _C = copyMatrix(C_tmp,D_row,D_colunm,_C);
+                _C = copyMatrix(C_tmp,_C_Colunm,_C_Row,_C);
             }
             else if (tmp_err <= errs.end()[-1] * (1 + tol_increase))
             {
                 errs.push_back(tmp_err);
-                _C = copyMatrix(C_tmp,D_row,D_colunm,_C);;
+                _C = copyMatrix(C_tmp,_C_Colunm,_C_Row,_C);;
             }
             else break;
 
@@ -101,18 +146,12 @@ MCR_ALS& MCR_ALS::fit(double* D, int D_colunm, int D_row, double* C, double* ST,
 
         if (_C != nullptr)
         {
-            //std::cout << "C" << std::endl;
-            //showMatrix(_C,D_row,D_colunm);
-            //showMatrix(_C,D_row,D_colunm);
-            //showMatrix(D,D_colunm,D_row);
-            regr->fit(_C,D_row,D_colunm,D,D_colunm,D_row);
-            //showMatrix(_C,4,4);
-            double* ST_tmp = regr->getCoef(false);
+            _St_regr->fit(_C,_C_Colunm,_C_Row,D,D_colunm,D_row);
+            double* ST_tmp = _St_regr->getCoef(false);
 
-            constraints(ST_tmp,D_row,D_row);
-            //showMatrix(ST_tmp,4,4);
+            constraints(ST_tmp,_ST_Colunm,_ST_Row);
 
-            cal_D = dot(_C,D_row,D_colunm,ST_tmp,targetMatrix_colunm,targetMatrix_row,cal_D);
+            cal_D = product(_C,_C_Colunm,_C_Row,ST_tmp,_ST_Colunm,_ST_Row,cal_D);
             double tmp_err = meanSquareError(cal_D,D,D_colunm,D_row);
 
             if(ismin_err(tmp_err))n_above_min = 0;
@@ -120,16 +159,15 @@ MCR_ALS& MCR_ALS::fit(double* D, int D_colunm, int D_row, double* C, double* ST,
 
             if(n_above_min > tol_n_above_min)break;
 
-            //std::cout << tmp_err << std::endl << errs.end()[-1] << std::endl << (1 + tol_increase) << std::endl;
             if(errs.size() == 0)
             {
                 errs.push_back(tmp_err);
-                _ST = copyMatrix(ST_tmp,targetMatrix_colunm,targetMatrix_row,_ST);
+                _ST = copyMatrix(ST_tmp,_ST_Colunm,_ST_Row,_ST);
             }
             else if (tmp_err <= errs.end()[-1] * (1 + tol_increase))
             {
                 errs.push_back(tmp_err);
-                _ST = copyMatrix(ST_tmp,targetMatrix_colunm,targetMatrix_row,_ST);
+                _ST = copyMatrix(ST_tmp,_ST_Colunm,_ST_Row,_ST);
             }
             else break;
 

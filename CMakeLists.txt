@@ -9,6 +9,6 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 link_directories(lib/)
 
 add_executable(main.cpp DataToImage/DataToImage.cpp MCR-ALS/linear_algebra.cpp MCR-ALS/MCR-ALS.cpp MCR-ALS/Regressors.cpp MCR-ALS/utils.cpp)
-target_link_libraries(acqcam atcore ${OpenCV_LIBRARIES})
+target_link_libraries(${OpenCV_LIBRARIES})
 
 

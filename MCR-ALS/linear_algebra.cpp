@@ -1,7 +1,6 @@
 #include "linear_algebra.hpp"
 
-bool DEBUGFLAG = false;
-
+//Debug用
 void showMatrix(double* Matrix, int colunm, int row, bool allShow)
 {
     if((colunm <= 10 && row <= 10)|| allShow)
@@ -111,6 +110,7 @@ void showMatrix(double* Matrix, int colunm, int row, bool allShow)
 
 }
 
+//Debug用
 void showMatrix(bool* Matrix, int colunm, int row)
 {
     std::cout << "{" << std::endl;
@@ -125,6 +125,7 @@ void showMatrix(bool* Matrix, int colunm, int row)
     std::cout << "}" << std::endl;
 }
 
+//ノルム計算
 double norm(double* vector, int vector_size)
 {
     double norm = 0;
@@ -137,6 +138,23 @@ double norm(double* vector, int vector_size)
     return std::sqrt(norm);
 }
 
+//フベルニウスノルム計算
+double frobenius_norm(double* Matrix, int Matrix_colunm, int Matrix_row)
+{
+    double fro_norm_sum = 0;
+
+    for(int i = 0; i < Matrix_colunm; i++)
+    {
+        for(int j = 0; j < Matrix_row; j++)
+        {
+            fro_norm_sum += Matrix[i * Matrix_row + j] * Matrix[i * Matrix_row + j];
+        }
+    }
+
+    return std::sqrt(fro_norm_sum);
+}
+
+//行列式を求める(QR分解を用いてないのでとても遅いし、メモリを食う、改善の余地あり)
 double determinant(double* Matrix, int Matrix_colunm_, int Matrix_row_)
 {
     double determinant_solution = 0.0;
@@ -175,6 +193,7 @@ double determinant(double* Matrix, int Matrix_colunm_, int Matrix_row_)
     return determinant_solution;
 }
 
+//転置行列を求める
 double* transpose(double* Matrix, int Matrix_colunm_, int Matrix_row_, double* Matrix_t)
 {
     const unsigned int Matrix_colunm = Matrix_colunm_;
@@ -198,20 +217,30 @@ double* transpose(double* Matrix, int Matrix_colunm_, int Matrix_row_, double* M
     return Matrix_t;
 }
 
-double* sub(double* Matrix_A, double* Matrix_B, int Matrix_colunm, int Matrix_row, double* Matrix)
-{
-    for(int i = 0; i < Matrix_colunm; i++)for(int j = 0; j < Matrix_row; j++)Matrix[i * Matrix_row + j] = Matrix_A[i * Matrix_row + j] - Matrix_B[i * Matrix_row + j];
-    return Matrix;
-}
-
+//行列同士の和
 double* add(double* Matrix_A, double* Matrix_B, int Matrix_colunm, int Matrix_row, double* Matrix)
 {
     for(int i = 0; i < Matrix_colunm; i++)for(int j = 0; j < Matrix_row; j++)Matrix[i * Matrix_row + j] = Matrix_A[i * Matrix_row + j] + Matrix_B[i * Matrix_row + j];
     return Matrix;
 }
 
+//行列同士の差
+double* sub(double* Matrix_A, double* Matrix_B, int Matrix_colunm, int Matrix_row, double* Matrix)
+{
+    for(int i = 0; i < Matrix_colunm; i++)for(int j = 0; j < Matrix_row; j++)Matrix[i * Matrix_row + j] = Matrix_A[i * Matrix_row + j] - Matrix_B[i * Matrix_row + j];
+    return Matrix;
+}
 
-double* dot(double* Matrix_A, int Matrix_A_colunm_,  int Matrix_A_row_, double* Matrix_B, int Matrix_B_colunm_, int Matrix_B_row_, double* Matrix)
+//内積計算
+double dot(double* vector_A, double* vector_B, int vectorSize)
+{
+    double sum = 0;
+    for(int i = 0; i < vectorSize; i++)sum += vector_A[i] * vector_B[i];
+    return sum;
+}
+
+//行列積計算(改善の余地あり、手計算と同じ方法なのでとても遅い)
+double* product(double* Matrix_A, int Matrix_A_colunm_,  int Matrix_A_row_, double* Matrix_B, int Matrix_B_colunm_, int Matrix_B_row_, double* Matrix)
 {
     if(Matrix_A_row_ != Matrix_B_colunm_)return nullptr;
 
@@ -243,7 +272,6 @@ double* dot(double* Matrix_A, int Matrix_A_colunm_,  int Matrix_A_row_, double* 
             Matrix[i * Matrix_B_row_ + j] = tmpMatrix[i * Matrix_B_row_ + j];
         }
     }
-    if(DEBUGFLAG)std::cout << "(" << Matrix_A_colunm_ << "," << Matrix_A_row_ << ")" << " (" << Matrix_B_colunm_ << "," << Matrix_B_row_ << ")" << std::endl;
 
     delete[] tmpMatrix;
     return Matrix;
@@ -252,9 +280,6 @@ double* dot(double* Matrix_A, int Matrix_A_colunm_,  int Matrix_A_row_, double* 
 //ギブンス回転行列を用いたQR分解(Q : 規格直交行列、R : 上三角行列)
 bool QR_Decompose(double* Matrix, int Matrix_colunm, int Matrix_row, double* Q_Matrix,double* R_Matrix)
 {
-    const int maxIter = 100;
-    const double tol = 1e-10;
-    int iter = 0;
     std::vector<std::pair<int,int>> lower_tril;
 
     double* G_Matrix = new double[Matrix_colunm * Matrix_colunm];
@@ -264,7 +289,7 @@ bool QR_Decompose(double* Matrix, int Matrix_colunm, int Matrix_row, double* Q_M
 
     for(int i = 1; i < Matrix_colunm; i++)
     {
-        for(int j = 0; j < i; j++)
+        for(int j = 0; j < (Matrix_row > i ? i : Matrix_row); j++)
         {
             lower_tril.push_back({j,i});
         }
@@ -288,15 +313,15 @@ bool QR_Decompose(double* Matrix, int Matrix_colunm, int Matrix_row, double* Q_M
             double r = std::sqrt(R_Matrix[j * Matrix_row + j] * R_Matrix[j * Matrix_row + j] + R_Matrix[i * Matrix_row + j] * R_Matrix[i * Matrix_row + j]);
             double c = R_Matrix[j * Matrix_row + j] / r;
             double s = - R_Matrix[i * Matrix_row + j] / r;
-                        
+            
             G_Matrix[i * Matrix_colunm + i] = c;
             G_Matrix[j * Matrix_colunm + j] = c;
             G_Matrix[i * Matrix_colunm + j] = s;
             G_Matrix[j * Matrix_colunm + i] = -s;
 
-            R_Matrix = dot(G_Matrix,Matrix_colunm,Matrix_colunm,R_Matrix,Matrix_colunm,Matrix_row,R_Matrix);
+            R_Matrix = product(G_Matrix,Matrix_colunm,Matrix_colunm,R_Matrix,Matrix_colunm,Matrix_row,R_Matrix);
             double* G_Matrix_t = transpose(G_Matrix,Matrix_colunm,Matrix_colunm,G_Matrix);
-            Q_Matrix= dot(Q_Matrix,Matrix_colunm,Matrix_colunm,G_Matrix_t,Matrix_colunm,Matrix_colunm,Q_Matrix);
+            Q_Matrix= product(Q_Matrix,Matrix_colunm,Matrix_colunm,G_Matrix_t,Matrix_colunm,Matrix_colunm,Q_Matrix);
 
         }
     }
@@ -309,6 +334,7 @@ bool QR_Decompose(double* Matrix, int Matrix_colunm, int Matrix_row, double* Q_M
 //QR分解を行う(Q : 規格直交行列、R : 上三角行列)
 bool HouseHolderTransform(double* Matrix, int Matrix_colunm, int Matrix_row, double* R_Matrix,double* Q_Matrix)
 {
+    //std::cout << "HouseHolder Transform..." << std::endl;
     double* u_vector = new double[Matrix_colunm];
     double* H_Matrix = new double[Matrix_colunm * Matrix_colunm];
     int m = Matrix_colunm;
@@ -351,8 +377,8 @@ bool HouseHolderTransform(double* Matrix, int Matrix_colunm, int Matrix_row, dou
             }
         }
 
-        R_Matrix = dot(H_Matrix,Matrix_colunm,Matrix_colunm,R_Matrix,Matrix_colunm,Matrix_colunm,R_Matrix);
-        Q_Matrix = dot(Q_Matrix,Matrix_colunm,Matrix_colunm,H_Matrix,Matrix_colunm,Matrix_colunm,Q_Matrix);
+        R_Matrix = product(H_Matrix,Matrix_colunm,Matrix_colunm,R_Matrix,Matrix_colunm,Matrix_colunm,R_Matrix);
+        Q_Matrix = product(Q_Matrix,Matrix_colunm,Matrix_colunm,H_Matrix,Matrix_colunm,Matrix_colunm,Q_Matrix);
     }
 
     delete[] u_vector;
@@ -360,6 +386,7 @@ bool HouseHolderTransform(double* Matrix, int Matrix_colunm, int Matrix_row, dou
     return true;
 }
 
+//固有値以外がepsilon以下かどうか
 bool checkDiagonal(double* Matrix, int Matrix_colunm, int Matrix_row, double epsilon)
 {
     for(int i = 0; i < Matrix_colunm; i++)
@@ -373,10 +400,12 @@ bool checkDiagonal(double* Matrix, int Matrix_colunm, int Matrix_row, double eps
     return true;
 }
 
+//QR分解を用いた固有値計算
 double* eig(double* Matrix, int Matrix_colunm, int Matrix_row,double* eigValue)
 {
     std::cout << "finding eigenvalues..." << std::endl;
-    const int maxIter = 1000;
+
+    const int maxIter = 2000;
     int iter = 0;
     double S = 0;
 
@@ -397,8 +426,10 @@ double* eig(double* Matrix, int Matrix_colunm, int Matrix_row,double* eigValue)
     {
         S = Matrix_buff[Matrix_colunm * Matrix_row - 1];
         for(int i = 0; i < Matrix_colunm; i++)Matrix_buff[i * Matrix_row + i] -= S;
+
         HouseHolderTransform(Matrix_buff,Matrix_colunm,Matrix_row,R,Q);
-        dot(R,Matrix_colunm,Matrix_row,Q,Matrix_colunm,Matrix_row,Matrix_buff);
+        product(R,Matrix_colunm,Matrix_row,Q,Matrix_colunm,Matrix_row,Matrix_buff);
+
         for(int i = 0; i < Matrix_colunm; i++)Matrix_buff[i * Matrix_row + i] += S;
 
         if(checkDiagonal(Matrix_buff,Matrix_colunm,Matrix_row))break;
@@ -415,6 +446,7 @@ double* eig(double* Matrix, int Matrix_colunm, int Matrix_row,double* eigValue)
     return eigValue;
 }
 
+//下三角行列の逆行列計算
 double* inverse_lower_triangular_matrix(double* Matrix, int Matrix_colunm_, int Matrix_row_, double* inv_Matrix)
 {
     const unsigned int Matrix_colunm = Matrix_colunm_;
@@ -444,6 +476,7 @@ double* inverse_lower_triangular_matrix(double* Matrix, int Matrix_colunm_, int 
     return inv_Matrix;
 }
 
+//上三角行列の逆行列計算
 double* inverse_upper_triangular_matrix(double* Matrix, int Matrix_colunm_, int Matrix_row_, double* inv_Matrix)
 {
     const unsigned int Matrix_colunm = Matrix_colunm_;
@@ -525,6 +558,7 @@ bool LU_Decompose(int mode, double* Matrix, int Matrix_colunm_, int Matrix_row_,
     return true;
 }
 
+//LU分解による逆行列計算(正則のみ)
 double* inverse(double* Matrix, int Matrix_colunm_, int Matrix_row_, double* inv_Matrix)
 {
     const unsigned int Matrix_colunm = Matrix_colunm_;
@@ -537,7 +571,7 @@ double* inverse(double* Matrix, int Matrix_colunm_, int Matrix_row_, double* inv
     double* inverse_L = new double[Matrix_colunm * Matrix_row];
     double* inverse_U = new double[Matrix_colunm * Matrix_row];
     double* P = new double[Matrix_colunm * Matrix_row];
-
+    
     for(int i = 0; i < Matrix_colunm_; i++)
     {
         for(int j = 0; j < Matrix_row_; j++)
@@ -551,19 +585,12 @@ double* inverse(double* Matrix, int Matrix_colunm_, int Matrix_row_, double* inv
 
     LU_Decompose(1,Matrix,Matrix_colunm,Matrix_row,L,U,Q);
 
-    for(int i = 0; i < Matrix_colunm; i++)
-    {
-        if(L[i * Matrix_row + i] == 0)L[i * Matrix_row + i] = epsilon;
-        if(U[i * Matrix_row + i] == 0)U[i * Matrix_row + i] = epsilon;
-    }
-
-
     inverse_L = inverse_lower_triangular_matrix(L,Matrix_colunm,Matrix_row,inverse_L);
     inverse_U = inverse_upper_triangular_matrix(U,Matrix_colunm,Matrix_row,inverse_U);
 
-    P = dot(inverse_U,Matrix_colunm,Matrix_row,inverse_L,Matrix_colunm,Matrix_row,P);
-    inv_Matrix = dot(P,Matrix_colunm,Matrix_row,Q,Matrix_colunm,Matrix_row,inv_Matrix);
-
+    P = product(inverse_U,Matrix_colunm,Matrix_row,inverse_L,Matrix_colunm,Matrix_row,P);
+    inv_Matrix = product(P,Matrix_colunm,Matrix_row,Q,Matrix_colunm,Matrix_row,inv_Matrix);
+    
     delete[] L;
     delete[] U;
     delete[] Q;
@@ -574,9 +601,12 @@ double* inverse(double* Matrix, int Matrix_colunm_, int Matrix_row_, double* inv
     return inv_Matrix;
 }
 
-//まだRank落ちの正方行列にしか対応していない
+//LU分解、QR分解またはSVDを用いた疑似逆行列計算
 double* Pseudo_inverse(double* Matrix, int Matrix_colunm_, int Matrix_row_, double* pinv_Matrix)
 {
+    const int smaller_size = (Matrix_colunm_ > Matrix_row_ ? Matrix_row_ : Matrix_colunm_);
+    const double epsilon = std::numeric_limits<double>::epsilon();
+    
     int R_rank = 0;
     int new_R_colunm = 0;
     int new_R_row = 0;
@@ -591,11 +621,11 @@ double* Pseudo_inverse(double* Matrix, int Matrix_colunm_, int Matrix_row_, doub
     for(int i = 0; i < Matrix_row_; i++)
     {
         int zero_Counter = 0; 
-        for(int j = 0; j <= i; j++)
+        for(int j = 0; j <= (i > Matrix_colunm_ - 1 ? Matrix_colunm_ - 1 : i); j++)
         {
             if(std::abs(R[j * Matrix_row_ + i]) < 1e-12)zero_Counter++;
         }
-        if(zero_Counter != (i + 1))noneZero_row_Index.push_back(i);
+        if(zero_Counter != (i > Matrix_colunm_ - 1 ? Matrix_colunm_ : i + 1))noneZero_row_Index.push_back(i);
     }
 
     for(int i = 0; i < Matrix_colunm_; i++)
@@ -619,85 +649,84 @@ double* Pseudo_inverse(double* Matrix, int Matrix_colunm_, int Matrix_row_, doub
 
         return inverse(Matrix,Matrix_colunm_,Matrix_row_,pinv_Matrix);
     }
-
-    int new_Q_row = new_R_colunm;
-
-    double* new_Q = new double[Matrix_colunm_ * new_Q_row];
-    double* new_R = new double[new_R_colunm * Matrix_row_];
-
-    int n = 0;
-    for(int i : noneZero_row_Index)
+    else if (R_rank == Matrix_colunm_ || R_rank == Matrix_row_)
     {
-        for(int j = 0; j < Matrix_colunm_; j++)
-        {
-            new_Q[n * Matrix_colunm_ + j] = Q[j * Matrix_colunm_ + i];
-        }
-        n++;
-    }
+        int new_Q_row = new_R_colunm;
 
-    n = 0;
-    for(auto i : noneZero_colunm_Index)
+        double* new_Q = new double[Matrix_colunm_ * new_Q_row];
+        double* new_R = new double[new_R_colunm * Matrix_row_];
+
+        int n = 0;
+        for(int i : noneZero_colunm_Index)
+        {
+            for(int j = 0; j < Matrix_colunm_; j++)
+            {
+                new_Q[j * new_Q_row + n] = Q[j * Matrix_colunm_ + i];
+            }
+            n++;
+        }
+
+        n = 0;
+        for(auto i : noneZero_colunm_Index)
+        {
+            for(int j = 0; j < Matrix_row_; j++)
+            {
+                new_R[n * Matrix_row_ + j] = R[i * Matrix_row_ + j];
+            }
+            n++;
+        }
+
+        double* new_Rt = new double[Matrix_row_ * new_R_colunm];
+        double* new_RRt = new double[new_R_colunm * new_R_colunm];
+
+        double* new_Qt = transpose(new_Q,Matrix_colunm_,new_Q_row,new_Q); 
+        new_Rt = transpose(new_R,new_R_colunm,Matrix_row_,new_Rt);
+
+        new_RRt = product(new_R,new_R_colunm,Matrix_row_,new_Rt,Matrix_row_,new_R_colunm,new_RRt);
+
+        double* inv_RRt = inverse(new_RRt,new_R_colunm,new_R_colunm,new_RRt);
+
+        double* Rt_inv_RRt = product(new_Rt,Matrix_row_,new_R_colunm,inv_RRt,new_R_colunm,new_R_colunm,new_Rt);
+
+        product(Rt_inv_RRt,Matrix_row_,new_R_colunm,new_Qt,new_Q_row,Matrix_colunm_,pinv_Matrix);
+
+        delete[] new_Q;
+        delete[] new_R;
+        delete[] new_Rt;
+        delete[] new_RRt;
+    }
+    else
     {
-        for(int j = 0; j < Matrix_row_; j++)
-        {
-            new_R[n * Matrix_row_ + j] = R[i * Matrix_row_ + j];
-        }
-        n++;
+        double* U = new double[Matrix_colunm_ * Matrix_colunm_];
+        double* S = new double[Matrix_colunm_ * Matrix_row_];
+        double* V = new double[Matrix_row_ * Matrix_row_];
+
+        SVD(Matrix,Matrix_colunm_,Matrix_row_,U,S,V);
+
+        transpose(U,Matrix_colunm_,Matrix_colunm_,U);
+        transpose(S,Matrix_colunm_,Matrix_row_,S);
+        transpose(V,Matrix_row_,Matrix_row_,V);
+
+        for(int i = 0; i < smaller_size; i++)S[i * Matrix_row_ + i] = (std::abs(S[i * Matrix_row_ + i]) > epsilon ? 1 / S[i * Matrix_row_ + i] : 0);
+
+        product(V,Matrix_row_,Matrix_row_,S,Matrix_row_,Matrix_colunm_,S);
+        product(S,Matrix_row_,Matrix_colunm_,U,Matrix_colunm_,Matrix_colunm_,pinv_Matrix); 
+
+        delete[] U;
+        delete[] S;
+        delete[] V;
     }
-
-    double* fullRank_R = new double[new_R_colunm * new_R_row];
-
-    n = 0;
-    for(int i : noneZero_row_Index)
-    {
-        for(int j = 0; j < new_R_colunm; j++)
-        {
-            fullRank_R[j * new_R_row + n] = new_R[j * Matrix_row_ + i];
-        }
-        n++;
-    }
-
-    //DEBUGFLAG = true;
-    double* fullRank_R_t = new double[new_R_row * new_R_colunm];
-    fullRank_R_t = transpose(fullRank_R,new_R_colunm,new_R_row,fullRank_R_t);
-
-    double* fullRank_RtR = new double[new_R_row * new_R_row];
-    fullRank_RtR = dot(fullRank_R_t,new_R_row,new_R_colunm,fullRank_R,new_R_colunm,new_R_row,fullRank_RtR);
-
-    //DEBUGFLAG = false;
-    double* RtR_inv = inverse(fullRank_RtR,new_R_row,new_R_row,fullRank_RtR);
-    
-    double* calBuffer = new double[Matrix_row_ * new_R_colunm];
-    double* RMRt = new double[new_R_colunm * new_R_colunm];
-
-    //DEBUGFLAG = true;
-    double* M = dot(RtR_inv,new_R_row,new_R_row,RtR_inv,new_R_row,new_R_row,fullRank_RtR);
-    double* MRt = dot(M,new_R_row,new_R_row,fullRank_R_t,new_R_row,new_R_colunm,fullRank_R_t);
-    RMRt = dot(fullRank_R,new_R_colunm,new_R_row,MRt,new_R_row,new_R_colunm,RMRt);
-
-    double* Rt = transpose(new_R,new_R_colunm,Matrix_row_,new_R);
-    double* Qt = transpose(new_Q,Matrix_colunm_,new_Q_row,new_Q);
-
-    double* Rt_A = dot(Rt,Matrix_row_,new_R_colunm,RMRt,new_R_colunm,new_R_colunm,calBuffer);
-    double* Rt_A_Qt = dot(Rt_A,Matrix_row_,new_R_colunm,Qt,new_Q_row,Matrix_colunm_,pinv_Matrix);
-    //DEBUGFLAG = false;
 
     delete[] Q;
     delete[] R;
-    delete[] new_Q;
-    delete[] new_R;
-    delete[] fullRank_R;
-    delete[] fullRank_R_t;
-    delete[] fullRank_RtR;
-    delete[] calBuffer;
-    delete[] RMRt;
 
     return pinv_Matrix;
 }
 
+//LU分解を用いた線形solver
 double* equal_solve(double* Matrix, int Matrix_colunm_, int Matrix_row_, double* vector, int vector_size_, double* solution_vector)
 {
-    std::cout << "equal solve.." << std::endl;
+    //std::cout << "equal solve.." << std::endl;
     const unsigned int Matrix_colunm = Matrix_colunm_;
     const unsigned int Matrix_row    = Matrix_row_;
     const unsigned int vector_size = vector_size_;
@@ -734,15 +763,16 @@ double* equal_solve(double* Matrix, int Matrix_colunm_, int Matrix_row_, double*
     delete[] U;
     delete[] y;
 
-    std::cout << "equal solve end..." << std::endl;
+    //std::cout << "equal solve end..." << std::endl;
     return solution_vector;
 }
 
+//SVD計算(いろいろ遅い、改善の余地あり)
 void SVD(double* Matrix, int Matrix_colunm, int Matrix_row, double* U, double* S, double* V,int maxIter)
 {
     std::cout << "start SVD..." << std::endl;
 
-    //showMatrix(Matrix,Matrix_colunm,Matrix_row);
+    const double epsilon = std::numeric_limits<double>::epsilon();
 
     int smaller_Size = std::min(Matrix_colunm,Matrix_row);
     int larger_Size = std::max(Matrix_colunm,Matrix_row);
@@ -767,10 +797,8 @@ void SVD(double* Matrix, int Matrix_colunm, int Matrix_row, double* U, double* S
 
     Matrix_t = transpose(Matrix,Matrix_colunm,Matrix_row,Matrix_t);
 
-    //DEBUGFLAG = true;
-    MMt = dot(Matrix,Matrix_colunm,Matrix_row,Matrix_t,Matrix_row,Matrix_colunm,MMt);
-    MtM = dot(Matrix_t,Matrix_row,Matrix_colunm,Matrix,Matrix_colunm,Matrix_row,MtM);
-    //DEBUGFLAG = false;
+    MMt = product(Matrix,Matrix_colunm,Matrix_row,Matrix_t,Matrix_row,Matrix_colunm,MMt);
+    MtM = product(Matrix_t,Matrix_row,Matrix_colunm,Matrix,Matrix_colunm,Matrix_row,MtM);
 
     u_eigValues = eig(MMt,Matrix_colunm,Matrix_colunm,u_eigValues);
     v_eigValues = eig(MtM,Matrix_row,Matrix_row,v_eigValues);
@@ -800,18 +828,30 @@ void SVD(double* Matrix, int Matrix_colunm, int Matrix_row, double* U, double* S
         std::swap(eigValues[index_pair.first], eigValues[index_pair.second]);
     }
 
-    for(int& i : smaller_size_index)
+    for(int i : smaller_size_index)
     {
+        double epsilon = 1e-10;
+        int index = larger_Size;
         for(int j = 0; j < larger_Size; j++)
         {
-            if(std::abs(eigValues[i] - another_eigValues[j]) > 1e-10)continue;
-            larger_size_index.erase(std::remove(larger_size_index.begin(), larger_size_index.end(), j));
-            larger_size_index.insert(larger_size_index.begin(), j);
+            double diff = std::abs(eigValues[i] - another_eigValues[j]);
+            if(diff < epsilon)
+            {
+                index = j;
+                epsilon = diff;
+            }
+        }
+
+        if(index != larger_Size)
+        {
+            larger_size_index.erase(std::remove(larger_size_index.begin(), larger_size_index.end(), index));
+            larger_size_index.insert(larger_size_index.begin(), index);
         }
     }
 
     std::sort(larger_size_index.begin(), larger_size_index.begin() + smaller_Size, [another_eigValues](int l_idx, int r_idx){return another_eigValues[l_idx] > another_eigValues[r_idx];});
     std::sort(larger_size_index.begin() + smaller_Size, larger_size_index.end(), [another_eigValues](int l_idx, int r_idx){return std::abs(another_eigValues[l_idx]) > std::abs(another_eigValues[r_idx]);});
+    
     std::vector<std::pair<int,int>> larger_size_transposition = get_transposition(larger_size_index);
 
     for(std::pair<int,int> index_pair : larger_size_transposition)
@@ -819,12 +859,9 @@ void SVD(double* Matrix, int Matrix_colunm, int Matrix_row, double* U, double* S
         std::swap(another_eigValues[index_pair.first], another_eigValues[index_pair.second]);
     }
 
-    showMatrix(eigValues,1,smaller_Size);
-    showMatrix(another_eigValues,1,larger_Size);
-
     for(int i = 0; i < smaller_Size; i++)
     {
-        double eigValue = (std::abs(eigValues[i]) > 1e-10 ? eigValues[i] : 0);
+        double eigValue = (std::abs(eigValues[i]) > epsilon ? eigValues[i] : 0);
 
         if(eigValue < 0)eigValue = 0;
         S[i * Matrix_row + i] = std::sqrt(eigValue);
@@ -868,30 +905,23 @@ void SVD(double* Matrix, int Matrix_colunm, int Matrix_row, double* U, double* S
             }
         }
 
-        //showMatrix(sub_tmp_for_U,Matrix_colunm,Matrix_colunm);
-        //showMatrix(sub_tmp_for_V,Matrix_row,Matrix_row);
-
         double* inv_tmp_for_U = inverse(sub_tmp_for_U,Matrix_colunm,Matrix_colunm,tmp_for_U);
         double* inv_tmp_for_V = inverse(sub_tmp_for_V,Matrix_row,Matrix_row,tmp_for_V);
 
-        //showMatrix(sub_tmp_for_U,Matrix_colunm,Matrix_colunm);
-        //showMatrix(sub_tmp_for_V,Matrix_row,Matrix_row);
         for(int j = 0; j < Matrix_colunm; j++)u_vector[j] = 1;
         for(int j = 0; j < Matrix_row; j++)v_vector[j] = 1;
 
         while (iter < maxIter)
         {
-            u_vector = dot(inv_tmp_for_U,Matrix_colunm,Matrix_colunm,u_vector,Matrix_colunm,1,u_vector);
+            u_vector = product(inv_tmp_for_U,Matrix_colunm,Matrix_colunm,u_vector,Matrix_colunm,1,u_vector);
             double norm_u = norm(u_vector,Matrix_colunm);
             for(int n = 0; n < Matrix_colunm; n++)
             {
                 if(norm_u != 0)u_vector[n] /= norm_u;
                 else u_vector[n] = 1;
             }
-            //showMatrix(inv_tmp_for_U,Matrix_colunm,Matrix_colunm);
-            //showMatrix(u_vector,Matrix_colunm,1);
 
-            v_vector = dot(inv_tmp_for_V,Matrix_row,Matrix_row,v_vector,Matrix_row,1,v_vector);
+            v_vector = product(inv_tmp_for_V,Matrix_row,Matrix_row,v_vector,Matrix_row,1,v_vector);
             double norm_v = norm(v_vector,Matrix_row);
             for(int n = 0; n < Matrix_row; n++)
             {
@@ -930,7 +960,7 @@ void SVD(double* Matrix, int Matrix_colunm, int Matrix_row, double* U, double* S
             for(int j = 0; j < Matrix_colunm; j++)u_vector[j] = 1;
             while (iter_for_U < maxIter)
             {
-                u_vector = dot(inv_tmp_for_U,Matrix_colunm,Matrix_colunm,u_vector,Matrix_colunm,1,u_vector);
+                u_vector = product(inv_tmp_for_U,Matrix_colunm,Matrix_colunm,u_vector,Matrix_colunm,1,u_vector);
                 double norm_u = norm(u_vector,Matrix_colunm);
                 for(int n = 0; n < Matrix_colunm; n++)u_vector[n] /= norm_u;
                 iter_for_U++;
@@ -964,7 +994,7 @@ void SVD(double* Matrix, int Matrix_colunm, int Matrix_row, double* U, double* S
             for(int j = 0; j < Matrix_row; j++)v_vector[j] = 1;
             while (iter_for_V < maxIter)
             {
-                v_vector = dot(inv_tmp_for_V,Matrix_row,Matrix_row,v_vector,Matrix_row,1,v_vector);
+                v_vector = product(inv_tmp_for_V,Matrix_row,Matrix_row,v_vector,Matrix_row,1,v_vector);
                 double norm_v = norm(v_vector,Matrix_row);
                 for(int n = 0; n < Matrix_row; n++)v_vector[n] /= norm_v;
                 iter_for_V++;
@@ -976,7 +1006,6 @@ void SVD(double* Matrix, int Matrix_colunm, int Matrix_row, double* U, double* S
         }
         index++;
     }
-
 
     //固有値ベクトルの向きを合わせる
     for(int k = 0; k < Matrix_row; k++)
@@ -1007,6 +1036,7 @@ void SVD(double* Matrix, int Matrix_colunm, int Matrix_row, double* U, double* S
     std::cout << "SVD end..." << std::endl;
 }
 
+//NMF計算
 void NMF(double* Matrix, int Matrix_colunm, int Matrix_row, int n_components, double* W, double* H, double epsilon)
 {
     std::mt19937 mt{ std::random_device{}() };
@@ -1046,13 +1076,13 @@ void NMF(double* Matrix, int Matrix_colunm, int Matrix_row, int n_components, do
 
     while(true)
     {
-        YH = dot(Matrix,Matrix_colunm,Matrix_row,H_T,Matrix_row,n_components,YH);
+        YH = product(Matrix,Matrix_colunm,Matrix_row,H_T,Matrix_row,n_components,YH);
         H = transpose(H_T,Matrix_row,n_components,H);
-        WH_T = dot(W,Matrix_colunm,n_components,H,n_components,Matrix_row,WH_T);
-        WH_TH = dot(WH_T,Matrix_colunm,Matrix_row,H_T,Matrix_row,n_components,WH_TH);
+        WH_T = product(W,Matrix_colunm,n_components,H,n_components,Matrix_row,WH_T);
+        WH_TH = product(WH_T,Matrix_colunm,Matrix_row,H_T,Matrix_row,n_components,WH_TH);
         W_T = transpose(W,Matrix_colunm,n_components,W_T);
-        W_TY = dot(W_T,n_components,Matrix_colunm,Matrix,Matrix_colunm,Matrix_row,W_TY);
-        W_TWH_T_T = dot(W_T,n_components,Matrix_colunm,WH_T,Matrix_colunm,Matrix_row,W_TWH_T_T);
+        W_TY = product(W_T,n_components,Matrix_colunm,Matrix,Matrix_colunm,Matrix_row,W_TY);
+        W_TWH_T_T = product(W_T,n_components,Matrix_colunm,WH_T,Matrix_colunm,Matrix_row,W_TWH_T_T);
         W_TWH_T_T = transpose(W_TWH_T_T,n_components,Matrix_row,W_TWH_T_T);
 
         for(int i = 0; i < Matrix_colunm; i++)
@@ -1068,7 +1098,7 @@ void NMF(double* Matrix, int Matrix_colunm, int Matrix_row, int n_components, do
         }
         
         double residues = 0;
-        WH_T = dot(W,Matrix_colunm,n_components,H,n_components,Matrix_row,WH_T);
+        WH_T = product(W,Matrix_colunm,n_components,H,n_components,Matrix_row,WH_T);
         for(int i = 0; i < Matrix_colunm; i++)for(int j = 0; j < Matrix_row; j++)residues += (WH_T[i * Matrix_row + j] - Matrix[i * Matrix_row + j]) * (WH_T[i * Matrix_row + j] - Matrix[i * Matrix_row + j]);
 
         if(residues < epsilon)break;
@@ -1085,6 +1115,7 @@ void NMF(double* Matrix, int Matrix_colunm, int Matrix_row, int n_components, do
 
 }
 
+//rank計算
 int Matrix_rank(double* Matrix, int Matrix_colunm, int Matrix_row, bool DoSVD, double* U, double* S, double* V)
 {
     int rank = 0;
@@ -1099,6 +1130,7 @@ int Matrix_rank(double* Matrix, int Matrix_colunm, int Matrix_row, bool DoSVD, d
     return rank;
 }
 
+//使われていないが今後使われるかも?
 int eig_rank(double* eig_value, int eig_value_size)
 {
     int rank = 0;
@@ -1106,6 +1138,7 @@ int eig_rank(double* eig_value, int eig_value_size)
     return rank;
 }
 
+//互換の積計算(sortした行列をかっこよく並び替えるためだけに作った)
 std::vector<std::pair<int,int>> get_transposition(std::vector<int> index)
 {
     std::vector<bool> Waspassed(index.size(),false);
@@ -1126,9 +1159,4 @@ std::vector<std::pair<int,int>> get_transposition(std::vector<int> index)
     }
 
     return transposition;
-}
-
-void SETDEBUGFLAG(bool flag)
-{
-    DEBUGFLAG = flag;
 }
