@@ -1,7 +1,6 @@
 #include "linear_algebra.hpp"
 
-bool DEBUGFLAG = false;
-
+//Debug用関数
 void showMatrix(double* Matrix, int colunm, int row, bool allShow)
 {
     if((colunm <= 10 && row <= 10)|| allShow)
@@ -111,6 +110,7 @@ void showMatrix(double* Matrix, int colunm, int row, bool allShow)
 
 }
 
+//Debug用関数
 void showMatrix(bool* Matrix, int colunm, int row)
 {
     std::cout << "{" << std::endl;
@@ -125,6 +125,7 @@ void showMatrix(bool* Matrix, int colunm, int row)
     std::cout << "}" << std::endl;
 }
 
+//ノルム計算
 double norm(double* vector, int vector_size)
 {
     double norm = 0;
@@ -137,6 +138,7 @@ double norm(double* vector, int vector_size)
     return std::sqrt(norm);
 }
 
+//フベルニウスノルム計算
 double frobenius_norm(double* Matrix, int Matrix_colunm, int Matrix_row)
 {
     double fro_norm_sum = 0;
@@ -152,6 +154,7 @@ double frobenius_norm(double* Matrix, int Matrix_colunm, int Matrix_row)
     return std::sqrt(fro_norm_sum);
 }
 
+//行列式計算(手計算と同じやり方なので遅い、改善の余地あり)
 double determinant(double* Matrix, int Matrix_colunm_, int Matrix_row_)
 {
     double determinant_solution = 0.0;
@@ -190,6 +193,7 @@ double determinant(double* Matrix, int Matrix_colunm_, int Matrix_row_)
     return determinant_solution;
 }
 
+//行列の転置
 double* transpose(double* Matrix, int Matrix_colunm_, int Matrix_row_, double* Matrix_t)
 {
     const unsigned int Matrix_colunm = Matrix_colunm_;
@@ -213,18 +217,21 @@ double* transpose(double* Matrix, int Matrix_colunm_, int Matrix_row_, double* M
     return Matrix_t;
 }
 
-double* sub(double* Matrix_A, double* Matrix_B, int Matrix_colunm, int Matrix_row, double* Matrix)
-{
-    for(int i = 0; i < Matrix_colunm; i++)for(int j = 0; j < Matrix_row; j++)Matrix[i * Matrix_row + j] = Matrix_A[i * Matrix_row + j] - Matrix_B[i * Matrix_row + j];
-    return Matrix;
-}
-
+//行列和の計算
 double* add(double* Matrix_A, double* Matrix_B, int Matrix_colunm, int Matrix_row, double* Matrix)
 {
     for(int i = 0; i < Matrix_colunm; i++)for(int j = 0; j < Matrix_row; j++)Matrix[i * Matrix_row + j] = Matrix_A[i * Matrix_row + j] + Matrix_B[i * Matrix_row + j];
     return Matrix;
 }
 
+//行列差の計算
+double* sub(double* Matrix_A, double* Matrix_B, int Matrix_colunm, int Matrix_row, double* Matrix)
+{
+    for(int i = 0; i < Matrix_colunm; i++)for(int j = 0; j < Matrix_row; j++)Matrix[i * Matrix_row + j] = Matrix_A[i * Matrix_row + j] - Matrix_B[i * Matrix_row + j];
+    return Matrix;
+}
+
+//内積計算
 double dot(double* vector_A, double* vector_B, int vectorSize)
 {
     double sum = 0;
@@ -232,17 +239,9 @@ double dot(double* vector_A, double* vector_B, int vectorSize)
     return sum;
 }
 
-//double Strassen(double* Matrix_A, double* Matrix_B, double* Matrix_C, int A_col, int A_row, int B_col, int B_row, int C_col, int C_row)
-//{
-//    if(N == 1)return {Matrix_A[0] * Matrix_B[0]};
-//
-//    for()
-//}
-
+//行列積の計算
 double* product(double* Matrix_A, int Matrix_A_colunm_,  int Matrix_A_row_, double* Matrix_B, int Matrix_B_colunm_, int Matrix_B_row_, double* Matrix)
 {
-    //if(DEBUGFLAG)showMatrix(Matrix_A,Matrix_A_colunm_,Matrix_A_row_);
-    //if(DEBUGFLAG)showMatrix(Matrix_B,Matrix_B_colunm_,Matrix_B_row_);
     if(Matrix_A_row_ != Matrix_B_colunm_)return nullptr;
 
     double* tmpMatrix = new double[Matrix_A_colunm_ * Matrix_B_row_];
@@ -275,8 +274,7 @@ double* product(double* Matrix_A, int Matrix_A_colunm_,  int Matrix_A_row_, doub
             Matrix[i * Matrix_B_row_ + j] = tmpMatrix[i * Matrix_B_row_ + j];
         }
     }
-    if(DEBUGFLAG)std::cout << "(" << Matrix_A_colunm_ << "," << Matrix_A_row_ << ")" << " (" << Matrix_B_colunm_ << "," << Matrix_B_row_ << ")" << std::endl;
-
+    
     delete[] tmpMatrix;
     return Matrix;
 }
@@ -304,8 +302,6 @@ bool QR_Decompose(double* Matrix, int Matrix_colunm, int Matrix_row, double* Q_M
         int j = tril.first;
         int i = tril.second;
 
-        //std::cout << "(" << i  << " " << j << ")" << std::endl;
-
         if(R_Matrix[i * Matrix_row + j] != 0)
         {
             for(int n = 0; n < Matrix_colunm; n++)
@@ -319,21 +315,16 @@ bool QR_Decompose(double* Matrix, int Matrix_colunm, int Matrix_row, double* Q_M
             double r = std::sqrt(R_Matrix[j * Matrix_row + j] * R_Matrix[j * Matrix_row + j] + R_Matrix[i * Matrix_row + j] * R_Matrix[i * Matrix_row + j]);
             double c = R_Matrix[j * Matrix_row + j] / r;
             double s = - R_Matrix[i * Matrix_row + j] / r;
-            //std::cout << "(" << r << "," << c << "," << s << ")" << std::endl;
             
             G_Matrix[i * Matrix_colunm + i] = c;
             G_Matrix[j * Matrix_colunm + j] = c;
             G_Matrix[i * Matrix_colunm + j] = s;
             G_Matrix[j * Matrix_colunm + i] = -s;
 
-            //showMatrix(G_Matrix,Matrix_colunm,Matrix_colunm);
-
             R_Matrix = product(G_Matrix,Matrix_colunm,Matrix_colunm,R_Matrix,Matrix_colunm,Matrix_row,R_Matrix);
             double* G_Matrix_t = transpose(G_Matrix,Matrix_colunm,Matrix_colunm,G_Matrix);
             Q_Matrix= product(Q_Matrix,Matrix_colunm,Matrix_colunm,G_Matrix_t,Matrix_colunm,Matrix_colunm,Q_Matrix);
 
-            //showMatrix(Q_Matrix,Matrix_colunm,Matrix_colunm);
-            //showMatrix(R_Matrix,Matrix_colunm,Matrix_row);
         }
     }
     
@@ -342,7 +333,7 @@ bool QR_Decompose(double* Matrix, int Matrix_colunm, int Matrix_row, double* Q_M
     return true;
 }
 
-//正方行列にのみ対応
+//Schwarz-Rutishauser Algorithmを用いたQR分解(Q : 規格直交行列、R : 上三角行列)
 void QRDecompotion_with_SR(double* Matrix, int Matrix_colunm, int Matrix_row, double* Q_Matrix,double* R_Matrix)
 {
     double* Q_i = new double[Matrix_colunm];
@@ -381,7 +372,7 @@ void QRDecompotion_with_SR(double* Matrix, int Matrix_colunm, int Matrix_row, do
     delete[] Q_k;
 }
 
-//QR分解を行う(Q : 規格直交行列、R : 上三角行列)
+//HouseHolder変換を用いたQR分解(Q : 規格直交行列、R : 上三角行列)
 bool HouseHolderTransform(double* Matrix, int Matrix_colunm, int Matrix_row, double* R_Matrix,double* Q_Matrix)
 {
     //std::cout << "HouseHolder Transform..." << std::endl;
@@ -431,24 +422,13 @@ bool HouseHolderTransform(double* Matrix, int Matrix_colunm, int Matrix_row, dou
         R_Matrix = product(H_Matrix,Matrix_colunm,Matrix_colunm,R_Matrix,Matrix_colunm,Matrix_colunm,R_Matrix);
         Q_Matrix = product(Q_Matrix,Matrix_colunm,Matrix_colunm,H_Matrix,Matrix_colunm,Matrix_colunm,Q_Matrix);
     }
-    //for(int i = 0; i < Matrix_colunm; i++)
-    //{
-    //    for(int j = Matrix_row - 1; j > 0; j--)
-    //    {
-    //        if(Q_Matrix[i * Matrix_row + j] == 0)continue;
-    //        else
-    //        {
-    //            Q_Matrix[i * Matrix_row + j] *= -1;
-    //            break;
-    //        }
-    //    }
-    //}
-    //std::cout << "HouseHolder Transform end..." << std::endl;
+
     delete[] u_vector;
     delete[] H_Matrix;
     return true;
 }
 
+//HouseHolder変換を用いた三重対角化
 double* tridiagnalization_With_HouseHolder(double* Matrix, int Matrix_colunm, int Matrix_row, double* tridiagnalMatrix,double* HouseHolderMatrix)
 {
     bool needHouseHolderMatrix_flag = (HouseHolderMatrix != nullptr ? true : false);
@@ -540,6 +520,7 @@ double* tridiagnalization_With_HouseHolder(double* Matrix, int Matrix_colunm, in
     return tridiagnalMatrix;
 }
 
+//収束しているかの確認
 bool checkDiagonal(double* Matrix, int Matrix_colunm, int Matrix_row, double epsilon)
 {
     for(int i = 0; i < Matrix_colunm; i++)
@@ -553,6 +534,7 @@ bool checkDiagonal(double* Matrix, int Matrix_colunm, int Matrix_row, double eps
     return true;
 }
 
+//HouseHolder変換によるQR分解を用いた固有値計算
 double* eig(double* Matrix, int Matrix_colunm, int Matrix_row,double* eigValue)
 {
     std::cout << "finding eigenvalues..." << std::endl;
@@ -589,6 +571,7 @@ double* eig(double* Matrix, int Matrix_colunm, int Matrix_row,double* eigValue)
     return eigValue;
 }
 
+//統治分割法を用いた固有値計算(他の固有値計算の関数より高速だが数値精度がいまいち)
 void eig_with_divide(double* Matrix, int Matrix_colunm, int Matrix_row,double* eigValue)
 {
     const int divide_number = 2;
@@ -732,6 +715,7 @@ void eig_with_divide(double* Matrix, int Matrix_colunm, int Matrix_row,double* e
     delete[] surplus_Q_stack;
 }
 
+//三重対角化を用いた固有値計算
 void eig_with_tridiag(double* Matrix, int Matrix_colunm, int Matrix_row, double* eigenValue, double* eigenVector)
 {
     int iter = 0;
@@ -770,6 +754,7 @@ void eig_with_tridiag(double* Matrix, int Matrix_colunm, int Matrix_row, double*
     delete[] R;
 }
 
+//下三角行列の逆行列計算
 double* inverse_lower_triangular_matrix(double* Matrix, int Matrix_colunm_, int Matrix_row_, double* inv_Matrix)
 {
     const unsigned int Matrix_colunm = Matrix_colunm_;
@@ -799,6 +784,7 @@ double* inverse_lower_triangular_matrix(double* Matrix, int Matrix_colunm_, int 
     return inv_Matrix;
 }
 
+//上三角化行列の逆行列計算
 double* inverse_upper_triangular_matrix(double* Matrix, int Matrix_colunm_, int Matrix_row_, double* inv_Matrix)
 {
     const unsigned int Matrix_colunm = Matrix_colunm_;
@@ -829,7 +815,7 @@ double* inverse_upper_triangular_matrix(double* Matrix, int Matrix_colunm_, int 
     return inv_Matrix;
 }
 
-//LU分解を行う(mode = 1は逆行列用、mode = 0は連立方程式用)
+//LU分解計算(mode = 1は逆行列用、mode = 0は連立方程式用)
 bool LU_Decompose(int mode, double* Matrix, int Matrix_colunm_, int Matrix_row_, double* L, double* U, double* Q)
 {
     const unsigned int Matrix_colunm = Matrix_colunm_;
@@ -880,6 +866,7 @@ bool LU_Decompose(int mode, double* Matrix, int Matrix_colunm_, int Matrix_row_,
     return true;
 }
 
+//LU分解を用いた逆行列計算
 double* inverse(double* Matrix, int Matrix_colunm_, int Matrix_row_, double* inv_Matrix)
 {
     const unsigned int Matrix_colunm = Matrix_colunm_;
@@ -944,6 +931,7 @@ double* inverse(double* Matrix, int Matrix_colunm_, int Matrix_row_, double* inv
     return inv_Matrix;
 }
 
+//SVDとQR分解を用いた疑似逆行列計算
 double* Pseudo_inverse(double* Matrix, int Matrix_colunm_, int Matrix_row_, double* pinv_Matrix)
 {
     const int smaller_size = (Matrix_colunm_ > Matrix_row_ ? Matrix_row_ : Matrix_colunm_);
@@ -1065,6 +1053,7 @@ double* Pseudo_inverse(double* Matrix, int Matrix_colunm_, int Matrix_row_, doub
     return pinv_Matrix;
 }
 
+//QR分解を用いた線型解計算
 double* equal_solve(double* Matrix, int Matrix_colunm_, int Matrix_row_, double* vector, int vector_size_, double* solution_vector)
 {
     //std::cout << "equal solve.." << std::endl;
@@ -1108,6 +1097,7 @@ double* equal_solve(double* Matrix, int Matrix_colunm_, int Matrix_row_, double*
     return solution_vector;
 }
 
+//eig関数で固有値計算、逆べき乗法で固有値ベクトル計算をするSVD(eig関数がボトルネックであまり速くない)
 void SVD(double* Matrix, int Matrix_colunm, int Matrix_row, double* U, double* S, double* V,int maxIter)
 {
     std::cout << "start SVD..." << std::endl;
@@ -1377,6 +1367,8 @@ void SVD(double* Matrix, int Matrix_colunm, int Matrix_row, double* U, double* S
     std::cout << "SVD end..." << std::endl;
 }
 
+
+//三重対角化とSchwarz-Rutishauser Algorithmを用いたSVD計算(SVD関数よりも高速)
 void svd_with_tridiag(double* Matrix, int Matrix_colunm, int Matrix_row, double* U, double* S, double* V)
 {
     double* Mt = new double[Matrix_row * Matrix_colunm];
@@ -1566,6 +1558,7 @@ void svd_with_tridiag(double* Matrix, int Matrix_colunm, int Matrix_row, double*
     delete[] eigenValue_V;
 }
 
+//NMF計算
 void NMF(double* Matrix, int Matrix_colunm, int Matrix_row, int n_components, double* W, double* H, double epsilon)
 {
     std::mt19937 mt{ std::random_device{}() };
@@ -1644,13 +1637,14 @@ void NMF(double* Matrix, int Matrix_colunm, int Matrix_row, int n_components, do
 
 }
 
+//行列のランク計算
 int Matrix_rank(double* Matrix, int Matrix_colunm, int Matrix_row, bool DoSVD, double* U, double* S, double* V)
 {
     int rank = 0;
     if(DoSVD)
     {
         if(U == nullptr || S == nullptr || V == nullptr)return -1;
-        SVD(Matrix,Matrix_colunm,Matrix_row,U,S,V);
+        svd_with_tridiag(Matrix,Matrix_colunm,Matrix_row,U,S,V);
     }
 
     for(int i = 0; i < (Matrix_colunm > Matrix_row ? Matrix_row : Matrix_colunm); i++)if((DoSVD ? S[i * Matrix_row + i] : Matrix[i * Matrix_row + i]) != 0)rank += 1;
@@ -1658,6 +1652,7 @@ int Matrix_rank(double* Matrix, int Matrix_colunm, int Matrix_row, bool DoSVD, d
     return rank;
 }
 
+//固有値からランク計算
 int eig_rank(double* eig_value, int eig_value_size)
 {
     int rank = 0;
@@ -1665,6 +1660,7 @@ int eig_rank(double* eig_value, int eig_value_size)
     return rank;
 }
 
+//互換の積計算
 std::vector<std::pair<int,int>> get_transposition(std::vector<int> index)
 {
     std::vector<bool> Waspassed(index.size(),false);
@@ -1687,6 +1683,7 @@ std::vector<std::pair<int,int>> get_transposition(std::vector<int> index)
     return transposition;
 }
 
+//行列のコピー
 double* copyMatrix(double* Matrix, int Matrix_colunm, int Matrix_row, double* copiedMatrix)
 {
     for(int i = 0; i < Matrix_colunm; i++)for(int j = 0; j < Matrix_row; j++)copiedMatrix[i * Matrix_row + j] = Matrix[i * Matrix_row + j];

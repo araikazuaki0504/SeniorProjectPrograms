@@ -110,7 +110,7 @@ int lstsq(double* Matrix_A, int Matrix_A_colunm_,  int Matrix_A_row_, double* Ma
     double* residues_buffer = new double[Matrix_A_colunm_ * Matrix_B_row_];
     double* Buffer = new double[Matrix_B_colunm_];
 
-    //疑似逆行列を求める&特異値を求める
+    //疑似逆行列を求める
     Pseudo_inverse(Matrix_A,Matrix_A_colunm_,Matrix_A_row_,Pinv_Matrix);
     showMatrix(Pinv_Matrix,Matrix_A_row_,Matrix_A_colunm_);
 
