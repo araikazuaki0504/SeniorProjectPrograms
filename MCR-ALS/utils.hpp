@@ -32,4 +32,3 @@ int lstsq(double* Matrix_A, int Matrix_A_colunm_,  int Matrix_A_row_, double* Ma
 int nnls(double* Matrix_A, int Matrix_A_colunm_,  int Matrix_A_row_, double* Matrix_B, int Matrix_B_colunm_, int Matrix_B_row, lstsq_result* cal_result);
 double meanSquareError(double* calMatrix, double* acutuallyMatrix, int Matrix_colunm, int Matrix_row);
 void constraints(double* Matrix, int Matrix_colunm, int Matrix_row);
-double* copyMatrix(double* Matrix, int Matrix_colunm, int Matrix_row, double* copiedMatrix);

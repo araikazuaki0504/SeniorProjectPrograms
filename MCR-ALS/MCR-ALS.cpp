@@ -38,7 +38,7 @@ MCR_ALS& MCR_ALS::changeRegressorType_forALL(std::string C_RegressorType,std::st
         _St_regr = new NNLS();
     }
 
-    std::cout << "Change To C_Regressor -> " << C_RegressorType << " & St_Regressor -> " << St_RegressorType <<  std::endl;
+    std::cout << "\e[32mChange To C_Regressor -> " << C_RegressorType << " & St_Regressor -> " << St_RegressorType << "\e[m" << std::endl;
 
     return *this;
 }
@@ -97,6 +97,10 @@ MCR_ALS& MCR_ALS::fit(double* D, int D_colunm, int D_row, double* C, double* ST,
 
     int n_increase = 0;
     int n_above_min = 0;
+    int n_iter = 0;
+
+    bool loop_flag = true;
+
     errs.clear();
 
     _C  = (C != nullptr  ? copyMatrix(C,_C_Colunm,_C_Row,new double[_C_Colunm * _C_Row]) : new double[_C_Colunm *  _C_Row]);
@@ -104,11 +108,12 @@ MCR_ALS& MCR_ALS::fit(double* D, int D_colunm, int D_row, double* C, double* ST,
 
     for(int i = 0; i < _maxIter; i++)
     {
+        n_iter = i + 1;
         if(_ST != nullptr)
         {
             transpose(D,D_colunm,D_row,D_T);
             transpose(_ST,_ST_Colunm,_ST_Row,Matrix_T);
-
+            
             _C_regr->fit(Matrix_T,_ST_Row,_ST_Colunm,D_T,D_row,D_colunm);
 
             double* C_tmp = _C_regr->getCoef();
@@ -121,7 +126,10 @@ MCR_ALS& MCR_ALS::fit(double* D, int D_colunm, int D_row, double* C, double* ST,
             if(ismin_err(tmp_err))n_above_min = 0;
             else n_above_min += 1;
 
-            if(n_above_min > tol_n_above_min)break;
+            if(n_above_min > tol_n_above_min)
+            {
+                break;
+            }
 
             if(errs.size() == 0)
             {
@@ -133,7 +141,10 @@ MCR_ALS& MCR_ALS::fit(double* D, int D_colunm, int D_row, double* C, double* ST,
                 errs.push_back(tmp_err);
                 _C = copyMatrix(C_tmp,_C_Colunm,_C_Row,_C);;
             }
-            else break;
+            else
+            {
+                break;
+            }
 
             if(errs.size() > 1)
             {
@@ -141,7 +152,10 @@ MCR_ALS& MCR_ALS::fit(double* D, int D_colunm, int D_row, double* C, double* ST,
                 else n_increase *= 0;
             }
 
-            if(n_increase > tol_n_increase)break;
+            if(n_increase > tol_n_increase)
+            {
+                break;
+            }
         }
 
         if (_C != nullptr)
@@ -157,7 +171,10 @@ MCR_ALS& MCR_ALS::fit(double* D, int D_colunm, int D_row, double* C, double* ST,
             if(ismin_err(tmp_err))n_above_min = 0;
             else n_above_min += 1;
 
-            if(n_above_min > tol_n_above_min)break;
+            if(n_above_min > tol_n_above_min)
+            {
+                break;
+            }
 
             if(errs.size() == 0)
             {
@@ -169,7 +186,14 @@ MCR_ALS& MCR_ALS::fit(double* D, int D_colunm, int D_row, double* C, double* ST,
                 errs.push_back(tmp_err);
                 _ST = copyMatrix(ST_tmp,_ST_Colunm,_ST_Row,_ST);
             }
-            else break;
+            else if (loop_flag)
+            {
+                loop_flag = true;
+            }
+            else
+            {
+                break;
+            }
 
             if(errs.size() > 1)
             {
@@ -177,7 +201,18 @@ MCR_ALS& MCR_ALS::fit(double* D, int D_colunm, int D_row, double* C, double* ST,
                 else n_increase *= 0;
             }
 
-            if(n_increase > tol_n_increase)break;
+            if(n_increase > tol_n_increase)
+            {
+                break;
+            }
+
+            if(n_iter >= _maxIter)
+            {
+               break;
+            }
+
+            n_iter = i + 1;
+
         }
     }
     delete[] D_T;

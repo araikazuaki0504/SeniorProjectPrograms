@@ -112,6 +112,7 @@ int lstsq(double* Matrix_A, int Matrix_A_colunm_,  int Matrix_A_row_, double* Ma
 
     //疑似逆行列を求める&特異値を求める
     Pseudo_inverse(Matrix_A,Matrix_A_colunm_,Matrix_A_row_,Pinv_Matrix);
+    showMatrix(Pinv_Matrix,Matrix_A_row_,Matrix_A_colunm_);
 
     product(Pinv_Matrix,Matrix_A_row_,Matrix_A_colunm_,Matrix_B,Matrix_B_colunm_,Matrix_B_row_,cal_result->_lstsq_solution);
     
@@ -284,7 +285,7 @@ int nnls(double* Matrix_A, int Matrix_A_colunm_,  int Matrix_A_row_, double* Mat
                     else
                     {
                         s[i] = 0;
-                    }
+                    }   
                 }
 
                 delete[] new_sub_Matrix;
@@ -357,10 +358,4 @@ double meanSquareError(double* acutuallyMatrix, double* calMatrix, int Matrix_co
 void constraints(double* Matrix, int Matrix_colunm, int Matrix_row)
 {
     for(int i = 0; i < Matrix_colunm; i++)for(int j = 0; j < Matrix_row; j++)if(Matrix[i * Matrix_row + j] < 0)Matrix[i * Matrix_row + j] = 0;
-}
-
-double* copyMatrix(double* Matrix, int Matrix_colunm, int Matrix_row, double* copiedMatrix)
-{
-    for(int i = 0; i < Matrix_colunm; i++)for(int j = 0; j < Matrix_row; j++)copiedMatrix[i * Matrix_row + j] = Matrix[i * Matrix_row + j];
-    return copiedMatrix;
 }
