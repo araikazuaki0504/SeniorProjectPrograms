@@ -16,18 +16,11 @@ lstsq_result::~lstsq_result()
 
 void lstsq_result::showData()
 {
-    std::cout << "最小二乗解：" << std::endl << "{" << std::endl;
-    for(int i = 0; i < _solution_colunm_size; i++)
-    {
-        for(int j = 0; j < _solution_row_size; j++)
-        {
-            cout << std::fixed << std::setprecision(5) << _lstsq_solution[i * _solution_row_size + j] << " ";
-        }
-        std::cout << std::endl;
-    }
-    cout << "}" << std::endl;
+    std::cout << "最小二乗解：" << std::endl;
+    showMatrix(_lstsq_solution,_solution_colunm_size,_solution_row_size);
+    std::cout << std::endl;
     std::cout << "残差：{";
-    for(int i = 0; i < _solution_colunm_size; i++)std::cout << std::fixed << std::setprecision(16) <<_residues[i] << ",";
+    for(int i = 0; i < _solution_row_size; i++)std::cout << std::fixed << std::setprecision(16) <<_residues[i] << ",";
     std::cout << "}" << std::endl;
     if(_rank != -1)
     {
