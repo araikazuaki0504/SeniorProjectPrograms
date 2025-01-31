@@ -21,8 +21,8 @@ double* sub(double* Matrix_A, double* Matrix_B, int Matrix_colunm, int Matrix_ro
 double* add(double* Matrix_A, double* Matrix_B, int Matrix_colunm, int Matrix_row, double* Matrix);
 double dot(double* vector_A, double* vector_B, int vectorSize);
 double* product(double* Matrix_A, int Matrix_A_colunm_,  int Matrix_A_row_, double* Matrix_B, int Matrix_B_colunm_, int Matrix_B_row_, double* Matrix);
-bool QR_Decompose(double* Matrix, int Matrix_colunm, int Matrix_row, double* Q_Matrix,double* R_Matrix);
-void QRDecompotion_with_SR(double* Matrix, int Matrix_colunm, int Matrix_row, double* Q_Matrix,double* R_Matrix);
+bool QR_Decomposition(double* Matrix, int Matrix_colunm, int Matrix_row, double* Q_Matrix,double* R_Matrix);
+void QR_Decomposition_with_SR(double* Matrix, int Matrix_colunm, int Matrix_row, double* Q_Matrix,double* R_Matrix);
 bool HouseHolderTransform(double* Matrix, int Matrix_colunm, int Matrix_row, double* R_Matrix,double* Q_Matrix);
 double* tridiagnalization_With_HouseHolder(double* Matrix, int Matrix_colunm, int Matrix_row, double* tridiagnalMatrix,double* HouseHolderMatrix = nullptr);
 bool checkDiagonal(double* Matrix, int Matrix_colunm, int Matrix_row, double epsilon = 1e-10);
