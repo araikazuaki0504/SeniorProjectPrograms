@@ -1,0 +1,69 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\ResearchPrograms\\SeniorProjectPrograms\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{F39928DA-879A-4817-AD1B-B79EC689DC0D}|SeniorProjectPrograms\\SeniorProjectPrograms.vcxproj|C:\\ResearchPrograms\\AndorSDKTest\\AndorTest\\MCR-ALS\\utils.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F39928DA-879A-4817-AD1B-B79EC689DC0D}|SeniorProjectPrograms\\SeniorProjectPrograms.vcxproj|C:\\ResearchPrograms\\SeniorProjectPrograms\\SeniorProjectPrograms\\SeniorProjectPrograms.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}",
+      "RelativeMoniker": "D:0:0:{F39928DA-879A-4817-AD1B-B79EC689DC0D}|SeniorProjectPrograms\\SeniorProjectPrograms.vcxproj|solutionrelative:SeniorProjectPrograms\\SeniorProjectPrograms.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{F39928DA-879A-4817-AD1B-B79EC689DC0D}|SeniorProjectPrograms\\SeniorProjectPrograms.vcxproj|C:\\ResearchPrograms\\AndorSDKTest\\AndorTest\\MCR-ALS\\linear_algebra.cpp||{D0E1A5C6-B359-4E41-9B60-3365922C2A22}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 0,
+          "Children": [
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "utils.cpp",
+              "DocumentMoniker": "C:\\ResearchPrograms\\AndorSDKTest\\AndorTest\\MCR-ALS\\utils.cpp",
+              "RelativeDocumentMoniker": "..\\AndorSDKTest\\AndorTest\\MCR-ALS\\utils.cpp",
+              "ToolTip": "C:\\ResearchPrograms\\AndorSDKTest\\AndorTest\\MCR-ALS\\utils.cpp",
+              "RelativeToolTip": "..\\AndorSDKTest\\AndorTest\\MCR-ALS\\utils.cpp",
+              "ViewState": "AQIAAAQAAAAAAAAAAAAcwBIAAAAnAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-07-22T03:20:02.966Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 2,
+              "Title": "linear_algebra.cpp",
+              "DocumentMoniker": "C:\\ResearchPrograms\\AndorSDKTest\\AndorTest\\MCR-ALS\\linear_algebra.cpp",
+              "RelativeDocumentMoniker": "..\\AndorSDKTest\\AndorTest\\MCR-ALS\\linear_algebra.cpp",
+              "ToolTip": "C:\\ResearchPrograms\\AndorSDKTest\\AndorTest\\MCR-ALS\\linear_algebra.cpp",
+              "RelativeToolTip": "..\\AndorSDKTest\\AndorTest\\MCR-ALS\\linear_algebra.cpp",
+              "ViewState": "AQIAAOoAAAAAAAAAAAAAAPMAAAAcAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-07-22T03:07:24.984Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
+              "Title": "SeniorProjectPrograms.cpp",
+              "DocumentMoniker": "C:\\ResearchPrograms\\SeniorProjectPrograms\\SeniorProjectPrograms\\SeniorProjectPrograms.cpp",
+              "RelativeDocumentMoniker": "SeniorProjectPrograms\\SeniorProjectPrograms.cpp",
+              "ToolTip": "C:\\ResearchPrograms\\SeniorProjectPrograms\\SeniorProjectPrograms\\SeniorProjectPrograms.cpp",
+              "RelativeToolTip": "SeniorProjectPrograms\\SeniorProjectPrograms.cpp",
+              "ViewState": "AQIAAEUAAAAAAAAAAAAAAFMAAAAgAAAA",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000677|",
+              "WhenOpened": "2024-07-22T03:03:20.19Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
